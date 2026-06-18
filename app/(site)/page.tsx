@@ -40,10 +40,10 @@ const steps = [
 ]
 
 const team = [
-  { n: 'Шахзод Сайдахматов', r: 'Директор' },
-  { n: 'Холмурод Орипов', r: 'Аудитор' },
-  { n: 'Шухрат Исламов', r: 'Юрист-консультант' },
-  { n: 'Саидакбар Саидов', r: 'Бухгалтер' },
+  { n: 'Шахзод Сайдахматов', r: 'Директор', photo: '/images/saidahmatov.webp' },
+  { n: 'Холмурод Орипов', r: 'Аудитор', photo: '/images/oripov.webp' },
+  { n: 'Шухрат Исламов', r: 'Юрист-консультант', photo: '/images/islamov.webp' },
+  { n: 'Саидакбар Саидов', r: 'Бухгалтер', photo: '/images/saidov.webp' },
 ]
 
 const reviews = [
@@ -269,10 +269,14 @@ export default async function Home() {
           <SectionHead label="Команда" title="Эксперты, которым можно доверять" sub="Специалисты с большим практическим опытом — на вашей стороне." />
           <div className="cards-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginTop: 48 }}>
             {team.map(m => (
-              <div key={m.n} style={{ padding: '30px 24px', borderRadius: 18, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
-                <div style={{ width: 66, height: 66, borderRadius: '50%', margin: '0 auto 16px', background: `linear-gradient(135deg, ${C}, #1488c4)`, color: '#04222b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 21 }}>{initials(m.n)}</div>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15.5, marginBottom: 5 }}>{m.n}</p>
-                <p style={{ color: C, fontSize: 13, fontWeight: 600 }}>{m.r}</p>
+              <div key={m.n} className="team-card" style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', aspectRatio: '4 / 5', background: '#160f2e' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.photo} alt={m.n} className="team-photo" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(14,10,28,0.94) 4%, rgba(14,10,28,0.4) 36%, transparent 58%)' }} />
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '20px 22px' }}>
+                  <p style={{ color: '#fff', fontWeight: 700, fontSize: 17, marginBottom: 4, lineHeight: 1.2 }}>{m.n}</p>
+                  <p style={{ color: C, fontSize: 13.5, fontWeight: 600 }}>{m.r}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -396,6 +400,9 @@ export default async function Home() {
         .marquee:hover { animation-play-state: paused; }
         .svc-card:hover { transform: translateY(-4px); border-color: ${cr(0.45)} !important; }
         .art-card:hover { transform: translateY(-4px); border-color: ${cr(0.4)} !important; }
+        .team-card .team-photo { transition: transform .5s cubic-bezier(.2,.7,.3,1); will-change: transform; }
+        .team-card:hover .team-photo { transform: scale(1.06); }
+        .team-card:hover { border-color: ${cr(0.45)} !important; }
         .faq-item[open] .faq-plus { transform: rotate(45deg); }
         .faq-plus { transition: transform .2s; display:inline-block; }
         summary::-webkit-details-marker { display:none; }

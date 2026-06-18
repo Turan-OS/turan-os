@@ -1,13 +1,22 @@
-// Логотип TURAN OS — временный текстовый плейсхолдер.
-// Жду исходник логотипа от клиента — заменю на него (SVG/PNG) здесь же.
+// Логотип TURAN OS. Использует фирменный SVG из public/images.
+// size — высота логотипа в px, ширина считается по пропорции (307×47).
+// tone: 'light' = белый логотип (на тёмном фоне), 'dark' = тёмный (на светлом).
+const ASPECT = 307 / 47
+
 export default function TuranLogo({
   size = 22,
-  tone = 'light', // 'light' = на тёмном фоне (белый текст), 'dark' = на светлом (тёмный текст)
+  tone = 'light',
 }: { size?: number; tone?: 'light' | 'dark' }) {
-  const ink = tone === 'light' ? '#ffffff' : '#291A42'
+  const src = tone === 'light' ? '/images/logo_white.svg' : '/images/logo.svg'
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', fontWeight: 800, fontSize: size, letterSpacing: '0.06em', color: ink, lineHeight: 1, whiteSpace: 'nowrap', userSelect: 'none' }}>
-      TURAN<span style={{ color: '#1EAAD1', marginLeft: size * 0.28 }}>OS</span>
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt="TURAN OS"
+      width={Math.round(size * ASPECT)}
+      height={size}
+      style={{ height: size, width: 'auto', display: 'block', userSelect: 'none' }}
+      draggable={false}
+    />
   )
 }
