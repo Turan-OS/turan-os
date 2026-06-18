@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # NEXT_PUBLIC_* вшиваются в сборку (нужны на этапе build)
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    image: turan-os-web
+    container_name: turan-os-web
+    env_file: .env.production          # секреты подставляются в рантайме
+    ports:
+      - "127.0.0.1:3000:3000"          # доступ только локально, наружу — через nginx
+    restart: unless-stopped            # автоперезапуск при сбое/перезагрузке сервера

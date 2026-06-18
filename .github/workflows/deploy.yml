@@ -1,0 +1,26 @@
+name: Deploy to server
+
+# Авто-деплой: при пуше в main GitHub заходит на сервер по SSH и запускает deploy.sh.
+# Требует секреты в GitHub (Settings → Secrets and variables → Actions):
+#   SERVER_HOST     — IP или домен сервера
+#   SERVER_USER     — пользователь (напр. root или deploy)
+#   SERVER_SSH_KEY  — приватный SSH-ключ (без пароля), публичная часть добавлена на сервер
+#   SERVER_PATH     — путь к проекту на сервере (напр. /opt/turan-os)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ${{ secrets.SERVER_PATH }}
+            ./deploy/deploy.sh
