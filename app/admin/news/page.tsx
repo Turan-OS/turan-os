@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
+import { slugifyShort } from '@/lib/slug'
 import { deleteNews, toggleNewsPublished } from './actions'
 
 export default async function AdminNews() {
@@ -36,6 +37,17 @@ export default async function AdminNews() {
                 <p style={{ fontSize: 12, color: '#8a929c', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{n.description}</p>
               </div>
             </Link>
+            <a
+              href={`/news/${slugifyShort(n.title)}${published ? '' : '?preview=1'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-btn-ghost"
+              style={{ flexShrink: 0, fontSize: 12, padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+              title={published ? 'Открыть статью на сайте' : 'Предпросмотр черновика'}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+              {published ? 'Открыть' : 'Просмотр'}
+            </a>
             <form action={toggleNewsPublished.bind(null, n.id, !published)} style={{ flexShrink: 0 }} title={published ? 'Снять с публикации' : 'Опубликовать'}>
               <button type="submit" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex' }}>
                 <span style={{ width: 34, height: 20, borderRadius: 20, flexShrink: 0, background: published ? '#1EAAD1' : '#cbd2da', position: 'relative', transition: 'background 0.2s' }}>
