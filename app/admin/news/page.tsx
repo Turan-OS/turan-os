@@ -2,19 +2,23 @@ import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 import { slugifyShort } from '@/lib/slug'
-import { deleteNews, toggleNewsPublished } from './actions'
+import { deleteNews, toggleNewsPublished, toggleNewsApproved } from './actions'
 
-// Редакционный статус новости (вычисляется из content + published, без отдельного поля в БД):
+// Редакционный статус новости (из content + approved + published):
 //  empty     — добавлен только заголовок, текста ещё нет (пишет ИИ)
 //  review    — текст написан, ждёт утверждения человеком
-//  published — утверждено и опубликовано на сайте
-type NewsState = 'empty' | 'review' | 'published'
-function newsState(n: { content?: string | null; published?: boolean | null }): NewsState {
+//  approved  — утверждено редактором, но пока не опубликовано (готово, не на сайте)
+//  published — опубликовано на сайте
+type NewsState = 'empty' | 'review' | 'approved' | 'published'
+function newsState(n: { content?: string | null; approved?: boolean | null; published?: boolean | null }): NewsState {
   if (n.published !== false) return 'published'
-  return (n.content ?? '').trim().length > 0 ? 'review' : 'empty'
+  const hasContent = (n.content ?? '').trim().length > 0
+  if (!hasContent) return 'empty'
+  return n.approved ? 'approved' : 'review'
 }
 const BADGE: Record<NewsState, { label: string; bg: string; color: string; border: string }> = {
   published: { label: 'Опубликовано',     bg: 'rgba(30,170,209,0.12)', color: '#127a98', border: 'rgba(30,170,209,0.3)' },
+  approved:  { label: 'Утверждено',        bg: 'rgba(16,160,90,0.13)',  color: '#0a7d44', border: 'rgba(16,160,90,0.38)' },
   review:    { label: 'На проверке',       bg: 'rgba(245,166,35,0.16)', color: '#b5740a', border: 'rgba(245,166,35,0.45)' },
   empty:     { label: 'Только заголовок',  bg: '#eef0f3',               color: '#8a929c', border: '#dde1e7' },
 }
@@ -23,11 +27,11 @@ export default async function AdminNews() {
   const { data } = await supabaseAdmin.from('news').select('*').order('date', { ascending: false })
   const items = data ?? []
 
-  const counts = { published: 0, review: 0, empty: 0 }
+  const counts = { published: 0, approved: 0, review: 0, empty: 0 }
   for (const n of items) counts[newsState(n)]++
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ maxWidth: 940 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 6 }}>Новости</h1>
@@ -35,6 +39,7 @@ export default async function AdminNews() {
             <span>{items.length} записей</span>
             <span style={{ color: '#dde1e7' }}>·</span>
             <span><b style={{ color: '#127a98' }}>{counts.published}</b> опубликовано</span>
+            <span><b style={{ color: '#0a7d44' }}>{counts.approved}</b> утверждено</span>
             <span><b style={{ color: '#b5740a' }}>{counts.review}</b> на проверке</span>
             <span><b style={{ color: '#8a929c' }}>{counts.empty}</b> без текста</span>
           </p>
@@ -47,9 +52,10 @@ export default async function AdminNews() {
           const state = newsState(n)
           const badge = BADGE[state]
           const published = state === 'published'
+          const approved = state === 'approved' || published
           const hasContent = (n.content ?? '').trim().length > 0
           return (
-          <div key={n.id} className="admin-card admin-row-click" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 14, opacity: state === 'empty' ? 0.7 : 1, borderLeft: `3px solid ${badge.color}` }}>
+          <div key={n.id} className="admin-card admin-row-click" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12, opacity: state === 'empty' ? 0.7 : 1, borderLeft: `3px solid ${badge.color}` }}>
             <Link href={`/admin/news/${n.id}`} style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
               <div style={{ position: 'relative', width: 72, height: 54, borderRadius: 8, overflow: 'hidden', background: '#f0f2f5', flexShrink: 0 }}>
                 {n.image_url
@@ -65,6 +71,7 @@ export default async function AdminNews() {
                 <p style={{ fontSize: 12, color: '#8a929c', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{n.description || (state === 'empty' ? 'Текста пока нет — добавьте содержание' : '')}</p>
               </div>
             </Link>
+
             <a
               href={`/news/${slugifyShort(n.title)}${published ? '' : '?preview=1'}`}
               target="_blank"
@@ -76,8 +83,25 @@ export default async function AdminNews() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
               {published ? 'Открыть' : 'Просмотр'}
             </a>
-            {hasContent ? (
-              <form action={toggleNewsPublished.bind(null, n.id, !published)} style={{ flexShrink: 0 }} title={published ? 'Снять с публикации' : 'Утвердить и опубликовать'}>
+
+            {/* Утверждение редактором — доступно, пока статья с текстом и не опубликована */}
+            {hasContent && !published ? (
+              <form action={toggleNewsApproved.bind(null, n.id, !approved)} style={{ flexShrink: 0 }}>
+                <button type="submit" className={approved ? 'admin-btn-primary' : 'admin-btn-ghost'}
+                  style={{ fontSize: 12, padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', ...(approved ? { background: '#0a9a55', boxShadow: 'none' } : {}) }}
+                  title={approved ? 'Снять утверждение (вернуть на проверку)' : 'Утвердить статью'}>
+                  {approved
+                    ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>Утверждено</>
+                    : 'Утвердить'}
+                </button>
+              </form>
+            ) : (
+              <span style={{ flexShrink: 0, width: 1 }} />
+            )}
+
+            {/* Публикация — доступна только после утверждения */}
+            {approved ? (
+              <form action={toggleNewsPublished.bind(null, n.id, !published)} style={{ flexShrink: 0 }} title={published ? 'Снять с публикации' : 'Опубликовать на сайте'}>
                 <button type="submit" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex' }}>
                   <span style={{ width: 34, height: 20, borderRadius: 20, flexShrink: 0, background: published ? '#1EAAD1' : '#cbd2da', position: 'relative', transition: 'background 0.2s' }}>
                     <span style={{ position: 'absolute', top: 2, left: published ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
@@ -85,12 +109,13 @@ export default async function AdminNews() {
                 </button>
               </form>
             ) : (
-              <span style={{ flexShrink: 0, display: 'inline-flex' }} title="Сначала добавьте текст статьи">
+              <span style={{ flexShrink: 0, display: 'inline-flex' }} title={hasContent ? 'Сначала утвердите статью' : 'Сначала добавьте текст'}>
                 <span style={{ width: 34, height: 20, borderRadius: 20, flexShrink: 0, background: '#e4e7ec', position: 'relative', cursor: 'not-allowed', opacity: 0.6 }}>
                   <span style={{ position: 'absolute', top: 2, left: 2, width: 16, height: 16, borderRadius: '50%', background: '#fff' }} />
                 </span>
               </span>
             )}
+
             <form action={deleteNews.bind(null, n.id)} style={{ flexShrink: 0 }}>
               <button type="submit" className="admin-btn-danger" style={{ fontSize: 12 }}>Удалить</button>
             </form>
