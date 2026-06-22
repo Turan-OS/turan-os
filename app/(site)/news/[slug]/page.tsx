@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/currentUser'
 import { getSetting } from '@/lib/settings'
 import { mdToHtml } from '@/lib/markdown'
 import { slugifyShort } from '@/lib/slug'
+import ArticleCTA from '@/components/ArticleCTA'
 import type { News } from '@/lib/supabase'
 import type { Metadata } from 'next'
 
@@ -105,6 +106,8 @@ export default async function NewsArticlePage({ params, searchParams }: Props) {
       {data.content && (
         <div className="prose-dark" dangerouslySetInnerHTML={{ __html: mdToHtml(data.content) }} />
       )}
+
+      <ArticleCTA />
 
       <div style={{ marginTop: 56, paddingTop: 32, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <Link href="/news" style={{ color: '#1EAAD1', textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>
