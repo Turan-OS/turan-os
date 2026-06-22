@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { getSetting } from '@/lib/settings'
 import { slugifyShort } from '@/lib/slug'
 import type { News } from '@/lib/supabase'
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 export const revalidate = 60
 
 export default async function NewsPage() {
-  const { data } = await supabase.from('news').select('*').order('date', { ascending: false })
-  const news: News[] = (data ?? []).filter(n => n.published !== false)  // черновики скрыты
+  const { data } = await supabaseAdmin.from('news').select('*').eq('published', true).order('date', { ascending: false })
+  const news: News[] = data ?? []  // только опубликованные (фильтр на уровне запроса)
   const showDate = (await getSetting('news_show_date', 'on')) !== 'off'
 
   return (

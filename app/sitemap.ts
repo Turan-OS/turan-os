@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { slugifyShort } from '@/lib/slug'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
@@ -7,13 +7,14 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { data: newsRaw } = await supabase
+  const { data: newsRaw } = await supabaseAdmin
     .from('news')
     .select('id, title, date, published')
+    .eq('published', true)
     .order('date', { ascending: false })
 
   // только опубликованные (черновики отдают 404 — в карту их не включаем)
-  const news = (newsRaw ?? []).filter(n => n.published !== false)
+  const news = newsRaw ?? []
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,     changeFrequency: 'weekly', priority: 1 },

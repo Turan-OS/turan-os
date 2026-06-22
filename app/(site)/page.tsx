@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import type { News } from '@/lib/supabase'
 import ApplyButton from '@/components/ApplyButton'
 import CostCalculator from '@/components/CostCalculator'
@@ -77,12 +77,13 @@ function initials(name: string) {
 export const revalidate = 120
 
 export default async function Home() {
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from('news')
     .select('id, title, description, date, image_url, published')
+    .eq('published', true)
     .order('date', { ascending: false })
     .limit(3)
-  const articles: News[] = (data ?? []).filter(n => n.published !== false)
+  const articles: News[] = data ?? []
 
   return (
     <>
