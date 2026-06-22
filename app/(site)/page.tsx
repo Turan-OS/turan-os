@@ -63,6 +63,13 @@ const faq = [
 
 const clients = ['China Railway Electrification', 'Ассоциация экспортёров Узбекистана', 'УЦ «Алмаз»', 'Access English Resources']
 
+const partners = [
+  { logo: '/images/tpp.webp', alt: 'Торгово-промышленная палата Узбекистана', text: 'Компания «TURAN OS» является членом Торгово-промышленной палаты Республики Узбекистан, которая была создана в целях формирования благоприятных условий для развития предпринимательства и совершенствования деловой среды.' },
+  { logo: '/images/eks.webp', alt: 'Ассоциация экспортёров Узбекистана', text: 'Компания «TURAN OS» заключила меморандум с Ассоциацией Экспортёров и Ассоциацией предпринимателей Республики Узбекистан. Это позволяет нам развивать бизнес, расширять деловые контакты и отношения с иностранными партнёрами.' },
+]
+
+const certs = ['/images/sertificate.webp', '/images/682dc56baf683.webp', '/images/682dc557719ff.webp', '/images/682dc55bed255.webp', '/images/682dc56166b43.webp']
+
 function initials(name: string) {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
@@ -308,6 +315,37 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ════════ PARTNERS & CERTIFICATES ════════ */}
+      <section id="partners" className="msec" style={{ padding: '88px 48px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHead label="Доверие" title="Партнёры и сертификаты" sub="Членство в профильных объединениях и подтверждённая квалификация специалистов." center />
+
+          <div className="cards-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16, marginTop: 48 }}>
+            {partners.map(p => (
+              <div key={p.alt} style={{ padding: '28px 30px', borderRadius: 18, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ background: '#fff', borderRadius: 12, padding: '18px 22px', height: 92, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.logo} alt={p.alt} style={{ maxHeight: 56, maxWidth: '85%', width: 'auto', objectFit: 'contain' }} />
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.7, marginTop: 20 }}>{p.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ color: C, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', textAlign: 'center', marginTop: 56, marginBottom: 22 }}>Сертификаты и квалификация</p>
+          <div className="certs" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14 }}>
+            {certs.map((src, i) => (
+              <a key={i} href={src} target="_blank" rel="noopener noreferrer" className="cert-card" style={{ display: 'block', background: '#fff', borderRadius: 10, padding: 6, border: '1px solid rgba(255,255,255,0.1)', transition: 'transform .25s, border-color .25s' }}>
+                <div style={{ aspectRatio: '3 / 4', borderRadius: 6, overflow: 'hidden' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Сертификат ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ════════ ARTICLES (SEO) ════════ */}
       <section id="articles" className="msec" style={{ padding: '84px 48px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
@@ -403,6 +441,7 @@ export default async function Home() {
         .team-card .team-photo { transition: transform .5s cubic-bezier(.2,.7,.3,1); will-change: transform; }
         .team-card:hover .team-photo { transform: scale(1.06); }
         .team-card:hover { border-color: ${cr(0.45)} !important; }
+        .cert-card:hover { transform: translateY(-4px); border-color: ${cr(0.5)} !important; }
         .faq-item[open] .faq-plus { transform: rotate(45deg); }
         .faq-plus { transition: transform .2s; display:inline-block; }
         summary::-webkit-details-marker { display:none; }
@@ -413,9 +452,11 @@ export default async function Home() {
           .bento .svc-card { grid-column: span 1 !important; }
           .cards-4, .proc-grid { grid-template-columns: repeat(2,1fr) !important; }
           .contacts-grid, .why-grid { grid-template-columns: 1fr !important; }
+          .certs { grid-template-columns: repeat(3,1fr) !important; }
         }
         @media(max-width:640px){
           .cards-2, .cards-3, .bento, .cards-4, .proc-grid { grid-template-columns: 1fr !important; }
+          .certs { grid-template-columns: repeat(2,1fr) !important; }
           .msec { padding-top: 56px !important; padding-bottom: 56px !important; }
           .hero-pill { left: 0 !important; }
         }
