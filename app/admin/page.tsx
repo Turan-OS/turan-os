@@ -111,7 +111,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <div className="admin-card" style={{ padding: '24px 28px', marginTop: 18, marginBottom: 18, maxWidth: 760 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: '#3a4250' }}>Воронка {periodLabel}</span>
-          <span style={{ fontSize: 13, color: '#8a929c' }}>конверсия в резидента <b style={{ color: entered[WON_STAGE] ? '#127a98' : '#8a929c' }}>{conv(entered[WON_STAGE])}%</b></span>
+          <span style={{ fontSize: 13, color: '#8a929c' }}>конверсия в клиента <b style={{ color: entered[WON_STAGE] ? '#127a98' : '#8a929c' }}>{conv(entered[WON_STAGE])}%</b></span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

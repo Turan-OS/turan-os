@@ -104,7 +104,7 @@ export default async function AdminApplications() {
   }
 
   const newCount = items.filter(a => a.status === FIRST_STAGE).length
-  // выручка считается по выигранным сделкам (резиденты), а общая — по всем
+  // выручка считается по выигранным сделкам (клиенты), а общая — по всем
   const totalAmount = items.reduce((s, a) => s + (a.amount ?? 0), 0)
   const wonAmount = items.filter(a => a.status === WON_STAGE).reduce((s, a) => s + (a.amount ?? 0), 0)
   const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
@@ -120,7 +120,7 @@ export default async function AdminApplications() {
         </div>
         <div style={{ display: 'flex', gap: 22, textAlign: 'right', alignItems: 'flex-end' }}>
           <div>
-            <div style={{ fontSize: 11, color: '#8a929c', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>Выручка (резиденты)</div>
+            <div style={{ fontSize: 11, color: '#8a929c', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>Выручка (клиенты)</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#127a98' }}>{fmt(wonAmount)} <span style={{ fontSize: 13, color: '#8a929c', fontWeight: 500 }}>сум</span></div>
           </div>
           <div>

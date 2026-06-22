@@ -1,6 +1,6 @@
 // Единый источник этапов воронки (канбан, карточка сделки, дашборд).
 export type StageKey =
-  | 'primary' | 'qualif' | 'review' | 'decision' | 'payment' | 'nurture' | 'resident' | 'rejected'
+  | 'primary' | 'qualif' | 'review' | 'decision' | 'payment' | 'nurture' | 'client' | 'rejected'
 
 export interface Stage { key: StageKey; title: string; color: string }
 
@@ -11,7 +11,7 @@ export const STAGES: Stage[] = [
   { key: 'decision', title: 'Принимают решение',  color: '#f5a623' },
   { key: 'payment',  title: 'Жду оплату',         color: '#cdd84a' },
   { key: 'nurture',  title: 'Дозревают',          color: '#e3b9d6' },
-  { key: 'resident', title: 'Резидент',           color: '#0a9a55' },
+  { key: 'client',   title: 'Клиент',             color: '#0a9a55' },
   { key: 'rejected', title: 'Отказ',              color: '#aab2bd' },
 ]
 
@@ -19,7 +19,7 @@ export const STAGE_TITLE: Record<string, string> = Object.fromEntries(STAGES.map
 export const STAGE_COLOR: Record<string, string> = Object.fromEntries(STAGES.map(s => [s.key, s.color]))
 
 export const FIRST_STAGE: StageKey = 'primary'
-export const WON_STAGE: StageKey = 'resident'
+export const WON_STAGE: StageKey = 'client'
 
 // этапы для воронки (без «Отказа»)
 export const FUNNEL_STAGES = STAGES.filter(s => s.key !== 'rejected')
@@ -28,6 +28,7 @@ export const FUNNEL_STAGES = STAGES.filter(s => s.key !== 'rejected')
 export const TITLE_TO_KEY: Record<string, StageKey> = {
   ...Object.fromEntries(STAGES.map(s => [s.title, s.key])) as Record<string, StageKey>,
   'Новые': 'primary', 'Связались': 'qualif', 'На встрече': 'review',
+  'Резидент': 'client', // историческое название этапа (для старых записей активности)
 }
 
 // ─── Единый статус контакта и сделки ───
