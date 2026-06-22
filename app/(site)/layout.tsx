@@ -2,7 +2,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ApplyModal from '@/components/ApplyModal'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
 
 const orgLd = {
   '@context': 'https://schema.org',

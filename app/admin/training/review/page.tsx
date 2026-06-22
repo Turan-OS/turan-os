@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import type { Lesson, LessonProgress, User } from '@/lib/supabase'
 import { sendTelegramTo } from '@/lib/telegram'
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local'
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
 
 // уведомить ученика в Telegram (если подключён)
 async function notifyStudent(progressId: number, build: (day?: number) => string) {

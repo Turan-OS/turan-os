@@ -6,11 +6,11 @@ const dec = new TextDecoder()
 export const SESSION_COOKIE = 'pbc_session'
 export type Role = 'admin' | 'administrator' | 'manager'
 
-// Домен cookie: на проде — общий для turan-os.local и www.turan-os.local,
+// Домен cookie: на проде — общий для turanos.uz и www.turanos.uz,
 // чтобы сессия не терялась при переходе между ними. Локально/на превью — undefined.
 export function cookieDomain(host?: string | null): string | undefined {
   const h = (host || '').split(':')[0]
-  if (h === 'turan-os.local' || h.endsWith('.turan-os.local')) return '.turan-os.local'
+  if (h === 'turanos.uz' || h.endsWith('.turanos.uz')) return '.turanos.uz'
   return undefined
 }
 export interface SessionPayload { uid: number; role: Role; name: string; exp: number }

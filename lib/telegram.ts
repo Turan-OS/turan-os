@@ -86,7 +86,7 @@ export function formatApplicationMessage(a: {
   is_owner?: string | null; profit?: string | null
   sphere?: string | null; instagram?: string | null; motivation?: string | null
 }): string {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local'
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
   const lines = [
     '🔔 <b>Новая заявка в TURAN OS</b>',
     '',

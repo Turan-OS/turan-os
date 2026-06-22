@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'),
   title: {
     default: 'TURAN OS — бухгалтерский аутсорсинг в Ташкенте',
     template: '%s | TURAN OS',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'TURAN OS — бухгалтерский аутсорсинг в Ташкенте',
     description: 'Бухгалтерия, налоги, аудит и регистрация бизнеса под ключ. От старта до стабильности — вместе с TURAN OS.',
-    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz',
     siteName: 'TURAN OS',
     locale: 'ru_RU',
     type: 'website',

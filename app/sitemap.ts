@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 import { slugifyShort } from '@/lib/slug'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://turan-os.local'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
 
 export const revalidate = 3600
 

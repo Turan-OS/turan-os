@@ -50,14 +50,14 @@ export default async function NewsArticlePage({ params }: Props) {
     headline: data.title,
     description: data.description,
     datePublished: data.date,
-    image: data.image_url ? [`https://turan-os.local${data.image_url}`] : undefined,
+    image: data.image_url ? [`https://www.turanos.uz${data.image_url}`] : undefined,
     author: { '@type': 'Organization', name: 'TURAN OS' },
     publisher: {
       '@type': 'Organization',
       name: 'TURAN OS',
-      url: 'https://turan-os.local',
+      url: 'https://www.turanos.uz',
     },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://turan-os.local/news/${prettySlug}` },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://www.turanos.uz/news/${prettySlug}` },
   }
 
   return (
