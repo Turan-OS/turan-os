@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', title: 'TURAN OS — бухгалтерский аутсорсинг', description: 'Бухгалтерия, налоги, аудит и регистрация бизнеса под ключ в Ташкенте.' },
   robots: { index: true, follow: true },
-  verification: { yandex: '0c6e9bf818f1de4c' },
+  verification: { yandex: '0c6e9bf818f1de4c', other: { 'msvalidate.01': '0178EBE671DA167D4A31B70663582FE4' } },
 }
 
 // Минимальный root layout — только html/body
