@@ -23,32 +23,60 @@ const BADGE: Record<NewsState, { label: string; bg: string; color: string; borde
   empty:     { label: 'Только заголовок',  bg: '#eef0f3',               color: '#8a929c', border: '#dde1e7' },
 }
 
-export default async function AdminNews() {
+export default async function AdminNews({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status } = await searchParams
   const { data } = await supabaseAdmin.from('news').select('*').order('date', { ascending: false })
   const items = data ?? []
 
   const counts = { published: 0, approved: 0, review: 0, empty: 0 }
   for (const n of items) counts[newsState(n)]++
 
+  // активный фильтр из URL (?status=...); иначе показываем все
+  const active = (['published', 'approved', 'review', 'empty'] as const).find(k => k === status) ?? null
+  const visible = active ? items.filter(n => newsState(n) === active) : items
+
+  // кликабельные фильтры-счётчики
+  const filters: { key: NewsState | null; label: string; count: number; color: string }[] = [
+    { key: null,        label: `${items.length} записей`, count: items.length,    color: '#5b6470' },
+    { key: 'published', label: 'опубликовано',            count: counts.published, color: '#127a98' },
+    { key: 'approved',  label: 'утверждено',              count: counts.approved,  color: '#0a7d44' },
+    { key: 'review',    label: 'на проверке',             count: counts.review,    color: '#b5740a' },
+    { key: 'empty',     label: 'без текста',              count: counts.empty,     color: '#8a929c' },
+  ]
+
   return (
     <div style={{ maxWidth: 940 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 6 }}>Новости</h1>
-          <p style={{ fontSize: 12.5, color: '#5b6470', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span>{items.length} записей</span>
-            <span style={{ color: '#dde1e7' }}>·</span>
-            <span><b style={{ color: '#127a98' }}>{counts.published}</b> опубликовано</span>
-            <span><b style={{ color: '#0a7d44' }}>{counts.approved}</b> утверждено</span>
-            <span><b style={{ color: '#b5740a' }}>{counts.review}</b> на проверке</span>
-            <span><b style={{ color: '#8a929c' }}>{counts.empty}</b> без текста</span>
-          </p>
+          <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>Новости</h1>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            {filters.map(f => {
+              const isActive = f.key === active
+              return (
+                <Link
+                  key={f.key ?? 'all'}
+                  href={f.key ? `/admin/news?status=${f.key}` : '/admin/news'}
+                  style={{
+                    textDecoration: 'none', fontSize: 12.5, padding: '4px 10px', borderRadius: 7,
+                    border: `1px solid ${isActive ? f.color : 'transparent'}`,
+                    background: isActive ? `${f.color}1a` : 'transparent',
+                    color: isActive ? f.color : '#5b6470',
+                    whiteSpace: 'nowrap', transition: 'background 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {f.key === null
+                    ? f.label
+                    : <><b style={{ color: f.color }}>{f.count}</b> {f.label}</>}
+                </Link>
+              )
+            })}
+          </div>
         </div>
         <Link href="/admin/news/new" className="admin-btn-primary">Добавить</Link>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(n => {
+        {visible.map(n => {
           const state = newsState(n)
           const badge = BADGE[state]
           const published = state === 'published'
@@ -122,7 +150,11 @@ export default async function AdminNews() {
           </div>
           )
         })}
-        {!items.length && <div className="admin-card" style={{ textAlign: 'center', padding: '64px 20px', color: '#8a929c', fontSize: 13 }}>Новостей пока нет</div>}
+        {!visible.length && (
+          <div className="admin-card" style={{ textAlign: 'center', padding: '64px 20px', color: '#8a929c', fontSize: 13 }}>
+            {active ? <>Нет статей со статусом «{BADGE[active].label}». <Link href="/admin/news" style={{ color: '#127a98' }}>Показать все</Link></> : 'Новостей пока нет'}
+          </div>
+        )}
       </div>
     </div>
   )
