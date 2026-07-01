@@ -25,7 +25,11 @@ const BADGE: Record<NewsState, { label: string; bg: string; color: string; borde
 
 export default async function AdminNews({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status } = await searchParams
-  const { data } = await supabaseAdmin.from('news').select('*').order('date', { ascending: false })
+  // сортировка по дате публикации (опубликованные сверху по свежести),
+  // затем остальные по дате записи
+  const { data } = await supabaseAdmin.from('news').select('*')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('date', { ascending: false })
   const items = data ?? []
 
   const counts = { published: 0, approved: 0, review: 0, empty: 0 }

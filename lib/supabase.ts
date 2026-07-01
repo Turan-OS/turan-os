@@ -26,6 +26,7 @@ export interface News {
   show_date?: boolean
   published?: boolean
   approved?: boolean
+  published_at?: string | null
   description: string
   content?: string
   image_url?: string
