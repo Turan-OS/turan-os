@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import CopyLink from './CopyLink'
+import QrButton from './QrButton'
 import { createLink, updateLinkTarget, deleteLink } from './actions'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
@@ -64,6 +65,7 @@ export default async function AdminLinks() {
                   <button type="submit" className="admin-btn-ghost" style={{ fontSize: 12, padding: '7px 12px' }}>Сохранить</button>
                 </form>
               </div>
+              <QrButton url={shortUrl} slug={l.slug} />
               <CopyLink url={shortUrl} />
               <form action={deleteLink.bind(null, l.id)}>
                 <button type="submit" className="admin-btn-danger" style={{ fontSize: 12 }}>Удалить</button>
