@@ -4,7 +4,7 @@ const enc = new TextEncoder()
 const dec = new TextDecoder()
 
 export const SESSION_COOKIE = 'pbc_session'
-export type Role = 'admin' | 'administrator' | 'manager'
+export type Role = 'admin' | 'administrator' | 'manager' | 'recruiter'
 
 // Домен cookie: на проде — общий для turanos.uz и www.turanos.uz,
 // чтобы сессия не терялась при переходе между ними. Локально/на превью — undefined.
@@ -94,11 +94,14 @@ export const SECTION_ROLES: Record<string, Role[]> = {
   '/admin/training':     ['admin', 'administrator', 'manager'],
   '/admin/news':         ['admin', 'administrator'],
   '/admin/links':        ['admin', 'administrator'],
+  '/admin/hr':           ['admin', 'recruiter'],
   '/admin/users':        ['admin'],
   '/admin/settings':     ['admin', 'administrator', 'manager'],
 }
 
 export function canAccess(path: string, role: Role): boolean {
+  // Рекрутер изолирован: ему доступен ТОЛЬКО HR-раздел
+  if (role === 'recruiter') return path === '/admin/hr' || path.startsWith('/admin/hr/')
   const entry = Object.keys(SECTION_ROLES).find(p => path === p || path.startsWith(p + '/'))
   if (!entry) return true // обзор и прочее — всем авторизованным
   return SECTION_ROLES[entry].includes(role)
@@ -106,5 +109,5 @@ export function canAccess(path: string, role: Role): boolean {
 
 // Куда отправить роль по умолчанию
 export function homeFor(role: Role): string {
-  return '/admin'
+  return role === 'recruiter' ? '/admin/hr' : '/admin'
 }

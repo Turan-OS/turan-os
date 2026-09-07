@@ -7,7 +7,7 @@ import TuranLogo from '@/components/TuranLogo'
 import { getCurrentUser } from '@/lib/currentUser'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const ROLE_LABEL: Record<string, string> = { admin: 'Админ', administrator: 'Администратор', manager: 'Менеджер' }
+const ROLE_LABEL: Record<string, string> = { admin: 'Админ', administrator: 'Администратор', manager: 'Менеджер', recruiter: 'Рекрутер' }
 const PUBLIC = ['/admin/login', '/admin/register']
 
 // Сколько просроченных задач видно пользователю (для красной плашки в меню)

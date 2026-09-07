@@ -11,9 +11,10 @@ import PasswordForm from './PasswordForm'
 const ROLES = [
   { key: 'manager', label: 'Менеджер' },
   { key: 'administrator', label: 'Администратор' },
+  { key: 'recruiter', label: 'Рекрутер' },
   { key: 'admin', label: 'Админ' },
 ]
-const ROLE_LABEL: Record<string, string> = { admin: 'Админ', administrator: 'Администратор', manager: 'Менеджер' }
+const ROLE_LABEL: Record<string, string> = { admin: 'Админ', administrator: 'Администратор', manager: 'Менеджер', recruiter: 'Рекрутер' }
 const STATUS_LABEL: Record<string, string> = { pending: 'Ожидает', active: 'Активен', blocked: 'Заблокирован' }
 
 // ── Server actions (управление пользователями — только админ) ──

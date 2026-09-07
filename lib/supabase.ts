@@ -34,6 +34,29 @@ export interface News {
   created_at?: string
 }
 
+// ─── HR / рекрутинг ───
+export interface HrForm {
+  id: number
+  slug: string
+  title: string
+  description: string
+  questions: import('./hrStages').HrQuestion[]
+  recruiter_id?: number | null
+  active: boolean
+  created_at?: string
+}
+export interface HrCandidate {
+  id: number
+  form_id: number
+  recruiter_id?: number | null
+  name?: string | null
+  contact?: string | null
+  answers: Record<string, string>
+  status: string
+  notes: string
+  created_at?: string
+}
+
 // Обучение менеджеров
 export interface Material {
   type: 'link' | 'doc' | 'file'  // внешняя ссылка / документ на платформе / загруженный файл
