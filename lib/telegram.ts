@@ -1,3 +1,5 @@
+import { supabaseAdmin } from '@/lib/supabase'
+
 /**
  * Отправка уведомлений в Telegram-бот.
  * Требует env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
@@ -47,11 +49,17 @@ export async function sendTelegramTo(chatId: number | string | null | undefined,
 /** Юзернейм бота (для deep-link t.me/<bot>?start=<code>) */
 export async function getBotUsername(): Promise<string | null> {
   const token = process.env.TELEGRAM_BOT_TOKEN
-  if (!token) return null
+  if (token) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { cache: 'no-store' })
+      const j = await res.json()
+      if (j?.result?.username) return j.result.username
+    } catch { /* фолбэк ниже */ }
+  }
+  // фолбэк: активный воронк-бот из tg_bots (токены ботов живут в БД, мультибот)
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { cache: 'no-store' })
-    const j = await res.json()
-    return j?.result?.username ?? null
+    const { data } = await supabaseAdmin.from('tg_bots').select('username').eq('active', true).order('id').limit(1).maybeSingle()
+    return data?.username ?? null
   } catch { return null }
 }
 
