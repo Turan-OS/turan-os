@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -21,13 +22,18 @@ export const revalidate = 60
 // Фолбэк — старые числовые ссылки /news/5 (чтобы не ломать уже расшаренные URL).
 // Берём через admin-клиент (минуя RLS), чтобы видеть и черновики — публичный показ
 // черновиков всё равно перекрыт проверкой в самом компоненте.
-async function getNews(slug: string): Promise<News | null> {
-  const { data } = await supabaseAdmin.from('news').select('*').order('date', { ascending: false })
-  const list = (data ?? []) as News[]
-  return list.find(n => slugifyShort(n.title) === slug)
-    ?? (/^\d+$/.test(slug) ? list.find(n => String(n.id) === slug) : undefined)
-    ?? null
-}
+// cache() — один результат на запрос (generateMetadata + сам компонент не дублируют запрос)
+const getNews = cache(async (slug: string): Promise<News | null> => {
+  // 1) лёгкий список id+title (без тяжёлого контента) — сопоставляем слаг
+  const { data: list } = await supabaseAdmin.from('news').select('id, title').order('date', { ascending: false })
+  const rows = (list ?? []) as { id: number; title: string }[]
+  const match = rows.find(n => slugifyShort(n.title) === slug)
+    ?? (/^\d+$/.test(slug) ? rows.find(n => String(n.id) === slug) : undefined)
+  if (!match) return null
+  // 2) полную строку тянем только для найденной статьи
+  const { data } = await supabaseAdmin.from('news').select('*').eq('id', match.id).maybeSingle()
+  return (data as News) ?? null
+})
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params

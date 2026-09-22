@@ -14,8 +14,11 @@ export const metadata: Metadata = {
 export const revalidate = 60
 
 export default async function NewsPage() {
-  const { data } = await supabaseAdmin.from('news').select('*').eq('published', true).order('date', { ascending: false })
-  const news: News[] = data ?? []  // только опубликованные (фильтр на уровне запроса)
+  // только нужные колонки (без тяжёлого content) — карточки показывают заголовок/описание/картинку
+  const { data } = await supabaseAdmin.from('news')
+    .select('id, title, description, image_url, date, published')
+    .eq('published', true).order('date', { ascending: false })
+  const news: News[] = (data ?? []) as News[]
   const showDate = (await getSetting('news_show_date', 'on')) !== 'off'
 
   return (
