@@ -22,6 +22,13 @@ const ICONS: Record<string, React.ReactNode> = {
   '/admin/news':         svg(<><rect x="3.5" y="5" width="13" height="15" rx="1.5" /><path d="M16.5 9H20v9a2 2 0 0 1-2 2" /><path d="M6.5 9h7M6.5 12.5h7M6.5 16h4" /></>),
   '/admin/links':        svg(<><path d="M9 15l6-6" /><path d="M10.5 6.5l1.2-1.2a4 4 0 0 1 5.7 5.7l-1.2 1.2" /><path d="M13.5 17.5l-1.2 1.2a4 4 0 0 1-5.7-5.7l1.2-1.2" /></>),
   '/admin/hr':           svg(<><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" /><path d="M16 4.5a3 3 0 0 1 0 6M18.5 19c0-2.2-1-4-2.7-4.6" /></>),
+  '/admin/analytics':          svg(<><path d="M21 21H4a1 1 0 0 1-1-1V3" /><path d="M7 15l3.5-4 3 2.5L20 6" /></>),
+  '/admin/funnel/landings':    svg(<><path d="M3 5h18l-7 8v6l-4 2v-8z" /></>),
+  '/admin/funnel/broadcasts':  svg(<><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4z" /></>),
+  '/admin/funnel/campaigns':   svg(<><path d="M3 11l16-7v16L3 13z" /><path d="M3 11v2a2 2 0 0 0 2 2h1" /><path d="M8 15v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2" /></>),
+  '/admin/funnel/subscribers': svg(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>),
+  '/admin/funnel/dialogs':     svg(<><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" /></>),
+  '/admin/funnel/bots':        svg(<><rect x="5" y="8" width="14" height="10" rx="2.5" /><path d="M12 5v3" /><circle cx="12" cy="4" r="1" /><path d="M9 12v1.5M15 12v1.5" /><path d="M2 12v3M22 12v3" /></>),
   '/admin/settings':     svg(<><path d="M4 8h8M18 8h2" /><circle cx="15" cy="8" r="2.4" /><path d="M4 16h4M14 16h6" /><circle cx="10.5" cy="16" r="2.4" /></>),
 }
 
@@ -47,6 +54,18 @@ const groups: { title?: string; items: Item[] }[] = [
     title: 'Найм',
     items: [
       { href: '/admin/hr',        label: 'Рекрутинг',   roles: HR },
+    ],
+  },
+  {
+    title: 'Маркетинг',
+    items: [
+      { href: '/admin/analytics',          label: 'Аналитика',     roles: CONTENT },
+      { href: '/admin/funnel/landings',    label: 'Мини-лендинги', roles: CONTENT },
+      { href: '/admin/funnel/broadcasts',  label: 'Авторассылки',  roles: CONTENT },
+      { href: '/admin/funnel/campaigns',   label: 'Рассылки',      roles: CONTENT },
+      { href: '/admin/funnel/subscribers', label: 'Подписчики',    roles: CONTENT },
+      { href: '/admin/funnel/dialogs',     label: 'Диалоги',       roles: CONTENT },
+      { href: '/admin/funnel/bots',        label: 'Боты',          roles: CONTENT },
     ],
   },
   {

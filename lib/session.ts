@@ -94,6 +94,8 @@ export const SECTION_ROLES: Record<string, Role[]> = {
   '/admin/training':     ['admin', 'administrator', 'manager'],
   '/admin/news':         ['admin', 'administrator'],
   '/admin/links':        ['admin', 'administrator'],
+  '/admin/analytics':    ['admin', 'administrator'],
+  '/admin/funnel':       ['admin', 'administrator'],
   '/admin/hr':           ['admin', 'recruiter'],
   '/admin/users':        ['admin'],
   '/admin/settings':     ['admin', 'administrator', 'manager'],

@@ -25,6 +25,31 @@ export default function ApplyModal() {
     return () => window.removeEventListener('openApplyModal', handler)
   }, [])
 
+  // Первое касание: запоминаем источник (utm_* + tgid из воронки) на весь визит.
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search)
+      const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tgid']
+      const cur: Record<string, string> = {}
+      keys.forEach(k => { const v = p.get(k); if (v) cur[k] = v.slice(0, 200) })
+      if (Object.keys(cur).length && !localStorage.getItem('turan_attrib')) {
+        cur.landing_url = window.location.href.split('#')[0]
+        localStorage.setItem('turan_attrib', JSON.stringify(cur))
+      }
+    } catch { /* приватный режим и т.п. */ }
+  }, [])
+
+  // Источник для отправки: сохранённое первое касание в приоритете, иначе — текущий URL.
+  const getAttrib = (): Record<string, string> => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('turan_attrib') || '{}')
+      const p = new URLSearchParams(window.location.search)
+      const cur: Record<string, string> = {}
+      ;['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tgid'].forEach(k => { const v = p.get(k); if (v) cur[k] = v.slice(0, 200) })
+      return { landing_url: window.location.href.split('#')[0], ...cur, ...stored }
+    } catch { return {} }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSending(true)
@@ -33,7 +58,7 @@ export default function ApplyModal() {
       const res = await fetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, ...getAttrib() }),
       })
       if (!res.ok) throw new Error('failed')
       setSent(true)
