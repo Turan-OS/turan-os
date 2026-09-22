@@ -19,7 +19,7 @@ export default function CtaButton({ slug, buttonText, pixel, contentName, conten
   return (
     <button onClick={onClick} style={{
       marginTop: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%',
-      background: '#229ED9', color: '#fff', fontWeight: 700, fontSize: 16,
+      background: '#1EAAD1', color: '#04222b', fontWeight: 700, fontSize: 16,
       padding: '15px 20px', borderRadius: 14, border: 'none', cursor: 'pointer',
       boxShadow: '0 6px 18px rgba(34,158,217,0.35)', fontFamily: 'inherit',
     }}>

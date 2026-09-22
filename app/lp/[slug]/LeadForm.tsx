@@ -51,7 +51,7 @@ export default function LeadForm({ slug, buttonText, pixel, contentName, content
   const inp: React.CSSProperties = {
     width: '100%', padding: '13px 15px', fontSize: 16, borderRadius: 12,
     border: '1px solid #d7dce3', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-    color: '#16241d', background: '#fff',
+    color: '#1f2329', background: '#fff',
   }
   const lbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#6a756e', marginBottom: 5, display: 'block' }
 
@@ -64,7 +64,7 @@ export default function LeadForm({ slug, buttonText, pixel, contentName, content
       </div>
       <button type="submit" disabled={sending} style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        background: '#229ED9', color: '#fff', fontWeight: 700, fontSize: 16,
+        background: '#1EAAD1', color: '#04222b', fontWeight: 700, fontSize: 16,
         padding: '15px 20px', borderRadius: 14, border: 'none', cursor: 'pointer',
         boxShadow: '0 6px 18px rgba(34,158,217,0.35)', opacity: sending ? 0.7 : 1,
       }}>
