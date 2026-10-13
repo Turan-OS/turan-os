@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { Dict } from './dict'
 
 const G = '#1EAAD1'
 
@@ -17,17 +18,17 @@ function formatPhone(raw: string): string {
 }
 
 // метки рекламы (первое касание в приоритете)
-function getAttrib(): Record<string, string> {
+function getAttrib(slug: string): Record<string, string> {
   try {
     const stored = JSON.parse(localStorage.getItem('turan_attrib') || '{}')
     const p = new URLSearchParams(window.location.search)
     const cur: Record<string, string> = {}
     ;['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tgid'].forEach(k => { const v = p.get(k); if (v) cur[k] = v.slice(0, 200) })
-    return { landing_url: window.location.href.split('#')[0], landing_slug: 'consultation', ...cur, ...stored }
-  } catch { return { landing_slug: 'consultation' } }
+    return { landing_url: window.location.href.split('#')[0], landing_slug: slug, ...cur, ...stored }
+  } catch { return { landing_slug: slug } }
 }
 
-export default function ConsultForm({ id = 'form' }: { id?: string }) {
+export default function ConsultForm({ t, slug, id = 'form' }: { t: Dict['form']; slug: string; id?: string }) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('+998')
   const [comment, setComment] = useState('')
@@ -40,16 +41,16 @@ export default function ConsultForm({ id = 'form' }: { id?: string }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!valid) { setError(localDigits.length !== 9 ? 'Введите номер телефона полностью' : 'Укажите имя'); return }
+    if (!valid) { setError(localDigits.length !== 9 ? t.errPhone : t.errName); return }
     setError(''); setSending(true)
     try {
       const res = await fetch('/api/apply', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), contact: phone, motivation: comment.trim(), ...getAttrib() }),
+        body: JSON.stringify({ name: name.trim(), contact: phone, motivation: comment.trim(), ...getAttrib(slug) }),
       })
       if (!res.ok) throw new Error()
       setSent(true)
-    } catch { setError('Не удалось отправить. Попробуйте ещё раз или позвоните нам.') }
+    } catch { setError(t.errSend) }
     finally { setSending(false) }
   }
 
@@ -64,34 +65,32 @@ export default function ConsultForm({ id = 'form' }: { id?: string }) {
       <div style={{ width: 66, height: 66, margin: '0 auto 20px', borderRadius: '50%', background: 'rgba(30,170,209,0.14)', border: '1px solid rgba(30,170,209,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
       </div>
-      <div style={{ fontSize: 23, fontWeight: 800, marginBottom: 10, color: '#fff' }}>Заявка принята!</div>
-      <div style={{ color: '#9b98ad', fontSize: 15.5, lineHeight: 1.6, maxWidth: 360, margin: '0 auto' }}>Менеджер свяжется с вами в ближайшее время, разберёт вашу ситуацию и рассчитает стоимость.</div>
+      <div style={{ fontSize: 23, fontWeight: 800, marginBottom: 10, color: '#fff' }}>{t.successTitle}</div>
+      <div style={{ color: '#9b98ad', fontSize: 15.5, lineHeight: 1.6, maxWidth: 360, margin: '0 auto' }}>{t.successText}</div>
     </div>
   )
 
   return (
     <form id={id} onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <label style={lbl}>Ваше имя</label>
-        <input value={name} onChange={e => { setName(e.target.value); if (error) setError('') }} required placeholder="Имя" style={field} />
+        <label style={lbl}>{t.name}</label>
+        <input value={name} onChange={e => { setName(e.target.value); if (error) setError('') }} required placeholder={t.namePh} style={field} />
       </div>
       <div>
-        <label style={lbl}>Телефон</label>
+        <label style={lbl}>{t.phone}</label>
         <input value={phone} onChange={e => { setPhone(formatPhone(e.target.value)); if (error) setError('') }} required inputMode="tel" placeholder="+998 90 123 45 67" style={{ ...field, borderColor: error && localDigits.length !== 9 ? '#e0574a' : 'rgba(255,255,255,0.12)' }} />
       </div>
       <div>
-        <label style={lbl}>Комментарий <span style={{ color: '#6b6880' }}>(необязательно)</span></label>
-        <textarea value={comment} onChange={e => setComment(e.target.value)} rows={2} placeholder="Сфера бизнеса, вопрос…" style={{ ...field, resize: 'vertical' }} />
+        <label style={lbl}>{t.comment} <span style={{ color: '#6b6880' }}>{t.commentOpt}</span></label>
+        <textarea value={comment} onChange={e => setComment(e.target.value)} rows={2} placeholder={t.commentPh} style={{ ...field, resize: 'vertical' }} />
       </div>
       {error && <div style={{ color: '#ff6b6b', fontSize: 14 }}>{error}</div>}
       <button type="submit" disabled={sending || !valid} style={{
         background: G, color: '#04222b', padding: '16px', borderRadius: 12, fontWeight: 800, fontSize: 17,
         border: 'none', cursor: (sending || !valid) ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
         opacity: (sending || !valid) ? 0.55 : 1, transition: 'opacity .15s',
-      }}>{sending ? 'Отправляем…' : 'Получить бесплатную консультацию'}</button>
-      <p style={{ color: '#6b6880', fontSize: 12, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
-        Нажимая кнопку, вы соглашаетесь на обработку персональных данных
-      </p>
+      }}>{sending ? t.sending : t.submit}</button>
+      <p style={{ color: '#6b6880', fontSize: 12, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>{t.consent}</p>
     </form>
   )
 }
