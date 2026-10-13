@@ -11,7 +11,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const { slug } = await params
     const body = await req.json().catch(() => ({}))
     const phone = (body.phone ?? '').toString().slice(0, 30).trim()
-    if (!phone) return NextResponse.json({ ok: false }, { status: 400 })
+    // требуем полный номер (9 цифр узбекского номера), иначе — мусорный трафик
+    const localDigits = phone.replace(/\D/g, '').replace(/^998/, '')
+    if (localDigits.length !== 9) return NextResponse.json({ ok: false, error: 'bad_phone' }, { status: 400 })
 
     const { data: l } = await supabaseAdmin
       .from('landings')

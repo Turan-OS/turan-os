@@ -21,9 +21,16 @@ export default function LeadForm({ slug, buttonText, pixel, contentName, content
 }) {
   const [phone, setPhone] = useState('+998')
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+
+  // телефон считается валидным только при полном номере (9 цифр после +998)
+  const localDigits = phone.replace(/\D/g, '').replace(/^998/, '')
+  const valid = localDigits.length === 9
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!valid) { setError('Введите номер телефона полностью'); return }
+    setError('')
     setSending(true)
     if (pixel) {
       const fbq = (window as unknown as { fbq?: Fbq }).fbq
@@ -60,13 +67,14 @@ export default function LeadForm({ slug, buttonText, pixel, contentName, content
       <style>{`.lp-inp::placeholder{color:#aab2bd;opacity:1}`}</style>
       <div>
         <label style={lbl}>Телефон</label>
-        <input className="lp-inp" value={phone} onChange={e => setPhone(formatPhone(e.target.value))} required inputMode="tel" placeholder="+998 90 123 45 67" style={inp} />
+        <input className="lp-inp" value={phone} onChange={e => { setPhone(formatPhone(e.target.value)); if (error) setError('') }} required inputMode="tel" placeholder="+998 90 123 45 67" style={{ ...inp, borderColor: error ? '#e0574a' : '#d7dce3' }} />
+        {error && <p style={{ fontSize: 12.5, color: '#e0574a', margin: '6px 0 0' }}>{error}</p>}
       </div>
-      <button type="submit" disabled={sending} style={{
+      <button type="submit" disabled={sending || !valid} style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
         background: '#1EAAD1', color: '#04222b', fontWeight: 700, fontSize: 16,
-        padding: '15px 20px', borderRadius: 14, border: 'none', cursor: 'pointer',
-        boxShadow: '0 6px 18px rgba(34,158,217,0.35)', opacity: sending ? 0.7 : 1,
+        padding: '15px 20px', borderRadius: 14, border: 'none', cursor: (sending || !valid) ? 'not-allowed' : 'pointer',
+        boxShadow: '0 6px 18px rgba(34,158,217,0.35)', opacity: (sending || !valid) ? 0.55 : 1,
       }}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.7 13.9l-4.8-1.5c-1-.3-1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3z"/></svg>
         {sending ? 'Секунду…' : (buttonText || 'Перейти в Telegram')}
