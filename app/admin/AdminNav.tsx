@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Role } from '@/lib/session'
@@ -77,6 +78,15 @@ const groups: { title?: string; items: Item[] }[] = [
 
 export default function AdminNav({ role, overdue = 0 }: { role?: Role; overdue?: number }) {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    try { const s = localStorage.getItem('admin_nav_collapsed'); if (s) setCollapsed(JSON.parse(s)) } catch { /* приватный режим */ }
+  }, [])
+  const toggle = (title: string) => setCollapsed(prev => {
+    const next = { ...prev, [title]: !prev[title] }
+    try { localStorage.setItem('admin_nav_collapsed', JSON.stringify(next)) } catch { /* ничего */ }
+    return next
+  })
   if (!role) return null
 
   return (
@@ -84,14 +94,21 @@ export default function AdminNav({ role, overdue = 0 }: { role?: Role; overdue?:
       {groups.map((g, gi) => {
         const items = g.items.filter(n => n.roles.includes(role))
         if (!items.length) return null
+        const hasActive = items.some(n => n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href))
+        // группа свёрнута только если пользователь её свернул И в ней нет активной страницы
+        const isCollapsed = !!(g.title && collapsed[g.title] && !hasActive)
         return (
           <div key={gi} style={{ marginTop: gi === 0 ? 0 : 14 }}>
             {g.title && (
-              <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6b6388', padding: '0 14px', marginBottom: 5 }}>
+              <button type="button" onClick={() => toggle(g.title!)} title={isCollapsed ? 'Развернуть' : 'Свернуть'}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6b6388', padding: '2px 14px', marginBottom: 5 }}>
                 {g.title}
-              </div>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', opacity: 0.65, transition: 'transform .15s', transform: isCollapsed ? 'rotate(-90deg)' : 'none' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
             )}
-            {items.map(n => {
+            {!isCollapsed && items.map(n => {
               const active = n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href)
               const badge = n.href === '/admin/tasks' && overdue > 0 ? overdue : 0
               return (
