@@ -7,6 +7,7 @@ import { STAGE_TITLE, FIRST_STAGE } from '@/lib/stages'
 import { insertHistory } from '@/lib/history'
 import { classifyChannel } from '@/lib/attribution'
 import { getDefaultResponsible } from '@/lib/settings'
+import { notifyTelegram, formatApplicationMessage } from '@/lib/telegram'
 import ConfirmSubmit from './ConfirmSubmit'
 
 const PER_PAGE = 50
@@ -80,6 +81,13 @@ async function createDealFromSubscriber(chatId: number) {
     application_id: app.id, contact_id: contact?.id ?? null, type: 'lead',
     text: 'Перенесён из подписчиков воронки (холодный лид)', user_id: me.uid, user_name: me.name,
   })
+
+  // уведомление в Telegram (бот заявок) — сразу, не блокирует при сбое
+  await notifyTelegram(formatApplicationMessage({
+    id: app.id, name, contact: phone || tgHandle, source,
+    motivation: 'Холодный лид из воронки (перенесён вручную из подписчиков)',
+  }))
+
   revalidatePath('/admin/funnel/subscribers')
   revalidatePath('/admin/applications')
 }
