@@ -1,31 +1,77 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import { getSetting } from '@/lib/settings'
 
-/**
- * Отправка уведомлений в Telegram-бот.
- * Требует env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
- * Если переменные не заданы — тихо пропускает (не ломает запрос).
- */
-export async function notifyTelegram(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) return
+export type NotifyChat = { id: number; title: string; type?: string }
 
+/** Низкоуровневая отправка одному чату */
+async function sendOne(token: string, chatId: number | string, text: string): Promise<boolean> {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
     })
-    if (!res.ok) {
-      console.error('Telegram notify failed:', res.status, await res.text())
-    }
+    if (!res.ok) console.error('Telegram notify failed:', chatId, res.status, await res.text())
+    return res.ok
   } catch (e) {
-    console.error('Telegram notify error:', e)
+    console.error('Telegram notify error:', chatId, e)
+    return false
+  }
+}
+
+/** Список чатов для уведомлений из БД (settings.telegram_notify_chats) */
+export async function getNotifyChats(): Promise<NotifyChat[]> {
+  try {
+    const raw = await getSetting('telegram_notify_chats', '')
+    if (!raw) return []
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((c: NotifyChat) => c && c.id) : []
+  } catch { return [] }
+}
+
+/**
+ * Отправка уведомления о заявке во ВСЕ подключённые чаты:
+ *   env TELEGRAM_CHAT_ID (можно несколько через запятую) + чаты/группы из админки.
+ * Требует env TELEGRAM_BOT_TOKEN. Если ни токена, ни чатов нет — тихо пропускает.
+ */
+export async function notifyTelegram(text: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) return
+
+  const ids = new Set<string>()
+  for (const c of (process.env.TELEGRAM_CHAT_ID || '').split(',')) {
+    const v = c.trim(); if (v) ids.add(v)
+  }
+  for (const c of await getNotifyChats()) ids.add(String(c.id))
+  if (ids.size === 0) return
+
+  await Promise.all([...ids].map(id => sendOne(token, id, text)))
+}
+
+/**
+ * Обнаружить чаты, которые «видел» бот (личные диалоги и группы),
+ * чтобы подключить их одним кликом. Читает getUpdates не поглощая очередь (без offset).
+ */
+export async function detectTelegramChats(): Promise<NotifyChat[]> {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) return []
+  try {
+    const au = encodeURIComponent(JSON.stringify(['message', 'my_chat_member', 'channel_post']))
+    const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?limit=100&timeout=0&allowed_updates=${au}`, { cache: 'no-store' })
+    const j = await res.json()
+    const updates: Array<Record<string, { chat?: { id: number; title?: string; first_name?: string; last_name?: string; username?: string; type: string } }>> = j?.result ?? []
+    const map = new Map<number, NotifyChat>()
+    for (const u of updates) {
+      const chat = u?.message?.chat || u?.my_chat_member?.chat || u?.channel_post?.chat || u?.edited_message?.chat
+      if (chat?.id) {
+        const title = chat.title || [chat.first_name, chat.last_name].filter(Boolean).join(' ') || chat.username || String(chat.id)
+        map.set(chat.id, { id: chat.id, title, type: chat.type })
+      }
+    }
+    return [...map.values()]
+  } catch (e) {
+    console.error('detectTelegramChats error:', e)
+    return []
   }
 }
 

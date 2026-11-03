@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { getCurrentUser } from '@/lib/currentUser'
 import { hashPassword } from '@/lib/password'
 import { getSetting, setSetting } from '@/lib/settings'
-import { getBotUsername, findChatIdByCode, sendTelegramTo } from '@/lib/telegram'
+import { getBotUsername, findChatIdByCode, sendTelegramTo, detectTelegramChats, notifyTelegram, getNotifyChats, type NotifyChat } from '@/lib/telegram'
 import type { User } from '@/lib/supabase'
 import PasswordForm from './PasswordForm'
 
@@ -63,6 +63,30 @@ async function toggleNewsDate(formData: FormData) {
   revalidatePath('/admin/settings'); revalidatePath('/news'); revalidatePath('/')
 }
 
+// ── Чаты для дублирования заявок в Telegram ──
+async function addNotifyChat(formData: FormData) {
+  'use server'
+  const id = Number(formData.get('id'))
+  const title = ((formData.get('title') as string) || '').toString().slice(0, 120)
+  if (!id) return
+  const list = await getNotifyChats()
+  if (!list.some(c => c.id === id)) list.push({ id, title: title || String(id), type: (formData.get('type') as string) || undefined })
+  await setSetting('telegram_notify_chats', JSON.stringify(list))
+  revalidatePath('/admin/settings')
+}
+async function removeNotifyChat(formData: FormData) {
+  'use server'
+  const id = Number(formData.get('id'))
+  const list = (await getNotifyChats()).filter(c => c.id !== id)
+  await setSetting('telegram_notify_chats', JSON.stringify(list))
+  revalidatePath('/admin/settings')
+}
+async function testNotify() {
+  'use server'
+  await notifyTelegram('🧪 <b>Тест уведомления TURAN OS</b>\nЕсли вы это видите — заявки будут приходить в этот чат.')
+  revalidatePath('/admin/settings?tab=site')
+}
+
 // ── Подключение Telegram сотрудника ──
 async function genTgCode() {
   'use server'
@@ -92,7 +116,7 @@ async function disconnectTg() {
   revalidatePath('/admin/settings')
 }
 
-export default async function Settings({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function Settings({ searchParams }: { searchParams: Promise<{ tab?: string; detect?: string }> }) {
   const me = await getCurrentUser()
   const isAdmin = me?.role === 'admin'
   const sp = await searchParams
@@ -170,12 +194,106 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             </form>
           </div>
           <p style={{ fontSize: 12, color: '#8a929c', marginTop: 12, maxWidth: 520 }}>Глобально для всего сайта: включено — даты показываются у всех новостей, выключено — скрыты у всех.</p>
+
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#8a929c', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '34px 0 14px' }}>Заявки в Telegram</div>
+          <NotifyChats detect={sp.detect === '1'} />
         </div>
       )}
     </div>
   )
 }
 
+async function NotifyChats({ detect }: { detect: boolean }) {
+  const chats = await getNotifyChats()
+  const envChat = (process.env.TELEGRAM_CHAT_ID || '').trim()
+  const hasToken = !!process.env.TELEGRAM_BOT_TOKEN
+  const detected = detect && hasToken ? await detectTelegramChats() : []
+  const known = new Set(chats.map(c => c.id))
+  const newly = detected.filter(d => !known.has(d.id))
+  const typeLabel = (t?: string) => t === 'private' ? 'Личный чат' : t === 'group' || t === 'supergroup' ? 'Группа' : t === 'channel' ? 'Канал' : 'Чат'
+
+  if (!hasToken) {
+    return (
+      <div className="admin-card" style={{ padding: '16px 22px', maxWidth: 620, fontSize: 13, color: '#b87613' }}>
+        Бот не подключён. Добавьте переменную <code>TELEGRAM_BOT_TOKEN</code> в настройках деплоя (Vercel) и сделайте редеплой — после этого здесь появится подключение чатов и групп.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: 620 }}>
+      <p style={{ fontSize: 13, color: '#8a929c', marginBottom: 14 }}>
+        Каждая новая заявка с сайта дублируется во все подключённые чаты и группы. Чтобы подключить группу — добавьте бота <b>@turanosassbot</b> в неё и напишите там <code>/start</code>, затем нажмите «Обнаружить».
+      </p>
+
+      {/* Подключённые чаты */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        {envChat && (
+          <div className="admin-card" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Основной чат</div>
+              <div style={{ fontSize: 12, color: '#8a929c', marginTop: 2 }}>Из переменной окружения · id {envChat}</div>
+            </div>
+            <span style={{ fontSize: 11, color: '#aab2bd' }}>задан на сервере</span>
+          </div>
+        )}
+        {chats.map(c => (
+          <div key={c.id} className="admin-card" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{c.title}</div>
+              <div style={{ fontSize: 12, color: '#8a929c', marginTop: 2 }}>{typeLabel(c.type)} · id {c.id}</div>
+            </div>
+            <form action={removeNotifyChat}>
+              <input type="hidden" name="id" value={c.id} />
+              <button type="submit" className="admin-btn-ghost" style={{ fontSize: 12 }}>Убрать</button>
+            </form>
+          </div>
+        ))}
+        {!envChat && chats.length === 0 && (
+          <div style={{ fontSize: 13, color: '#aab2bd' }}>Пока не подключён ни один чат. Нажмите «Обнаружить» ниже.</div>
+        )}
+      </div>
+
+      {/* Обнаружение */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Link href="/admin/settings?tab=site&detect=1" className="admin-btn-primary" style={{ padding: '9px 20px', textDecoration: 'none' }}>Обнаружить чаты</Link>
+        {(envChat || chats.length > 0) && (
+          <form action={testNotify}><button type="submit" className="admin-btn-ghost" style={{ padding: '9px 18px' }}>Отправить тест</button></form>
+        )}
+      </div>
+
+      {detect && (
+        <div style={{ marginTop: 16 }}>
+          {newly.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#8a929c' }}>
+              Новых чатов не найдено. Откройте бота <b>@turanosassbot</b> и нажмите «Старт» (для личных уведомлений) или добавьте его в группу и напишите там <code>/start</code>, затем нажмите «Обнаружить» ещё раз.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#127a98', marginBottom: 10 }}>Найдены — нажмите «Подключить»</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {newly.map(c => (
+                  <div key={c.id} className="admin-card" style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{c.title}</div>
+                      <div style={{ fontSize: 12, color: '#8a929c', marginTop: 2 }}>{typeLabel(c.type)} · id {c.id}</div>
+                    </div>
+                    <form action={addNotifyChat}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <input type="hidden" name="title" value={c.title} />
+                      <input type="hidden" name="type" value={c.type || ''} />
+                      <button type="submit" className="admin-btn-primary" style={{ fontSize: 12, padding: '8px 16px' }}>Подключить</button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 async function TelegramConnect({ uid }: { uid?: number }) {
   if (!uid) return null
   const { data: u, error } = await supabaseAdmin.from('users').select('telegram_chat_id, telegram_link_code').eq('id', uid).maybeSingle()
