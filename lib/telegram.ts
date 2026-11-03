@@ -158,23 +158,27 @@ export async function findChatIdByCode(code: string): Promise<{ id: number; name
 const esc = (s: string) =>
   (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-/** Форматирование сообщения о новой заявке */
+/** Форматирование сообщения о новой заявке. Показываем только заполненные поля. */
 export function formatApplicationMessage(a: {
   id?: number; name?: string | null; contact?: string | null
   is_owner?: string | null; profit?: string | null
   sphere?: string | null; instagram?: string | null; motivation?: string | null
+  source?: string | null
 }): string {
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.turanos.uz'
+  const ownerProfit = (a.is_owner || a.profit)
+    ? `🏢 Собственник: <b>${esc(a.is_owner || '—')}</b>   💰 Доход 5K+: <b>${esc(a.profit || '—')}</b>`
+    : ''
   const lines = [
     '🔔 <b>Новая заявка в TURAN OS</b>',
     '',
     a.name ? `👤 <b>${esc(a.name)}</b>` : '👤 <i>Без имени</i>',
     a.contact ? `📞 ${esc(a.contact)}` : '',
-    '',
-    `🏢 Собственник: <b>${esc(a.is_owner || '—')}</b>   💰 Доход 5K+: <b>${esc(a.profit || '—')}</b>`,
+    ownerProfit,
     a.sphere ? `🔎 Сфера: ${esc(a.sphere)}` : '',
     a.instagram ? `📸 ${esc(a.instagram)}` : '',
     a.motivation ? `💬 ${esc(a.motivation)}` : '',
+    a.source ? `🧭 ${esc(a.source)}` : '',
     '',
     a.id ? `➡️ <a href="${site}/admin/applications/${a.id}">Открыть в CRM</a>` : '',
   ]
