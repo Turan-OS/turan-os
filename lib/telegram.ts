@@ -3,6 +3,30 @@ import { getSetting } from '@/lib/settings'
 
 export type NotifyChat = { id: number; title: string; type?: string }
 
+/** Два бота: 'leads' — для заявок с сайта, 'notify' — для уведомлений сотрудникам */
+export type BotKind = 'leads' | 'notify'
+const TOKEN_KEY: Record<BotKind, string> = {
+  leads: 'telegram_leads_bot_token',
+  notify: 'telegram_notify_bot_token',
+}
+
+/** Токен бота: сначала из настроек (админка), затем запасной из env TELEGRAM_BOT_TOKEN */
+export async function getBotToken(kind: BotKind = 'leads'): Promise<string> {
+  const fromDb = (await getSetting(TOKEN_KEY[kind], '')).trim()
+  return fromDb || (process.env.TELEGRAM_BOT_TOKEN || '').trim()
+}
+
+/** Данные бота по токену (getMe) — для показа @username в настройках */
+export async function getBotInfo(token: string): Promise<{ username: string; name: string } | null> {
+  if (!token) return null
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { cache: 'no-store' })
+    const j = await res.json()
+    if (j?.result?.username) return { username: j.result.username, name: j.result.first_name || '' }
+  } catch { /* недоступен */ }
+  return null
+}
+
 /** Низкоуровневая отправка одному чату */
 async function sendOne(token: string, chatId: number | string, text: string): Promise<boolean> {
   try {
@@ -35,7 +59,7 @@ export async function getNotifyChats(): Promise<NotifyChat[]> {
  * Требует env TELEGRAM_BOT_TOKEN. Если ни токена, ни чатов нет — тихо пропускает.
  */
 export async function notifyTelegram(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
+  const token = await getBotToken('leads')
   if (!token) return
 
   const ids = new Set<string>()
@@ -52,8 +76,8 @@ export async function notifyTelegram(text: string): Promise<void> {
  * Обнаружить чаты, которые «видел» бот (личные диалоги и группы),
  * чтобы подключить их одним кликом. Читает getUpdates не поглощая очередь (без offset).
  */
-export async function detectTelegramChats(): Promise<NotifyChat[]> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
+export async function detectTelegramChats(kind: BotKind = 'leads'): Promise<NotifyChat[]> {
+  const token = await getBotToken(kind)
   if (!token) return []
   try {
     const au = encodeURIComponent(JSON.stringify(['message', 'my_chat_member', 'channel_post']))
@@ -75,9 +99,9 @@ export async function detectTelegramChats(): Promise<NotifyChat[]> {
   }
 }
 
-/** Отправка сообщения конкретному пользователю (по его chat_id) */
+/** Отправка сообщения конкретному пользователю (по его chat_id) — через бот уведомлений */
 export async function sendTelegramTo(chatId: number | string | null | undefined, text: string): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
+  const token = await getBotToken('notify')
   if (!token || !chatId) return false
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -92,9 +116,9 @@ export async function sendTelegramTo(chatId: number | string | null | undefined,
   }
 }
 
-/** Юзернейм бота (для deep-link t.me/<bot>?start=<code>) */
+/** Юзернейм бота уведомлений (для deep-link t.me/<bot>?start=<code>) */
 export async function getBotUsername(): Promise<string | null> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
+  const token = await getBotToken('notify')
   if (token) {
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { cache: 'no-store' })
@@ -111,7 +135,7 @@ export async function getBotUsername(): Promise<string | null> {
 
 /** Найти chat_id по коду подключения среди последних апдейтов бота (/start <code>) */
 export async function findChatIdByCode(code: string): Promise<{ id: number; name: string } | null> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
+  const token = await getBotToken('notify')
   if (!token || !code) return null
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?limit=100&timeout=0`, { cache: 'no-store' })

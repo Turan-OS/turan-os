@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { getCurrentUser } from '@/lib/currentUser'
 import { hashPassword } from '@/lib/password'
 import { getSetting, setSetting } from '@/lib/settings'
-import { getBotUsername, findChatIdByCode, sendTelegramTo, detectTelegramChats, notifyTelegram, getNotifyChats, type NotifyChat } from '@/lib/telegram'
+import { getBotUsername, findChatIdByCode, sendTelegramTo, detectTelegramChats, notifyTelegram, getNotifyChats, getBotToken, getBotInfo } from '@/lib/telegram'
 import type { User } from '@/lib/supabase'
 import PasswordForm from './PasswordForm'
 
@@ -61,6 +61,15 @@ async function toggleNewsDate(formData: FormData) {
   'use server'
   await setSetting('news_show_date', (formData.get('next') as string) || 'on')
   revalidatePath('/admin/settings'); revalidatePath('/news'); revalidatePath('/')
+}
+
+// ── Токены ботов Telegram (заявки / уведомления) ──
+async function saveBotToken(formData: FormData) {
+  'use server'
+  const kind = (formData.get('kind') as string) === 'notify' ? 'notify' : 'leads'
+  const token = ((formData.get('token') as string) || '').trim()
+  await setSetting(kind === 'notify' ? 'telegram_notify_bot_token' : 'telegram_leads_bot_token', token)
+  revalidatePath('/admin/settings?tab=site')
 }
 
 // ── Чаты для дублирования заявок в Telegram ──
@@ -195,6 +204,9 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           </div>
           <p style={{ fontSize: 12, color: '#8a929c', marginTop: 12, maxWidth: 520 }}>Глобально для всего сайта: включено — даты показываются у всех новостей, выключено — скрыты у всех.</p>
 
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#8a929c', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '34px 0 14px' }}>Боты Telegram</div>
+          <BotTokens />
+
           <div style={{ fontSize: 13, fontWeight: 700, color: '#8a929c', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '34px 0 14px' }}>Заявки в Telegram</div>
           <NotifyChats detect={sp.detect === '1'} />
         </div>
@@ -203,11 +215,61 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   )
 }
 
+async function BotTokens() {
+  const leadsRaw = await getSetting('telegram_leads_bot_token', '')
+  const notifyRaw = await getSetting('telegram_notify_bot_token', '')
+  const leadsTok = leadsRaw || (process.env.TELEGRAM_BOT_TOKEN || '')
+  const notifyTok = notifyRaw || (process.env.TELEGRAM_BOT_TOKEN || '')
+  const [leadsInfo, notifyInfo] = await Promise.all([getBotInfo(leadsTok), getBotInfo(notifyTok)])
+
+  function Card({ kind, title, hint, raw, envFallback, info }: {
+    kind: 'leads' | 'notify'; title: string; hint: string
+    raw: string; envFallback: boolean; info: { username: string; name: string } | null
+  }) {
+    const set = !!raw
+    return (
+      <div className="admin-card" style={{ padding: '18px 22px' }}>
+        <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
+        <div style={{ fontSize: 12.5, color: '#8a929c', margin: '4px 0 12px' }}>{hint}</div>
+        <div style={{ fontSize: 13, marginBottom: 12 }}>
+          {info ? (
+            <span style={{ color: '#127a98', fontWeight: 600 }}>✅ @{info.username}{info.name ? ` · ${info.name}` : ''}</span>
+          ) : (set || envFallback) ? (
+            <span style={{ color: '#b87613' }}>Токен задан, но бот не отвечает — проверьте токен.</span>
+          ) : (
+            <span style={{ color: '#aab2bd' }}>Токен не задан.</span>
+          )}
+          {set && <span style={{ color: '#aab2bd', marginLeft: 8 }}>(•••{raw.slice(-4)}, из настроек)</span>}
+          {!set && envFallback && <span style={{ color: '#aab2bd', marginLeft: 8 }}>(из переменной окружения)</span>}
+        </div>
+        <form action={saveBotToken} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input type="hidden" name="kind" value={kind} />
+          <input name="token" type="text" autoComplete="off" placeholder="Вставьте токен бота (BotFather)" className="admin-input" style={{ flex: '1 1 320px', fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }} />
+          <button type="submit" className="admin-btn-primary" style={{ padding: '9px 20px' }}>Сохранить</button>
+        </form>
+        <div style={{ fontSize: 11.5, color: '#aab2bd', marginTop: 8 }}>Пустое поле + «Сохранить» — очистить токен (вернётся к переменной окружения, если задана).</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 620 }}>
+      <Card kind="leads" title="Бот для заявок" hint="Сюда приходят заявки с сайта (личка и группы ниже)."
+        raw={leadsRaw} envFallback={!leadsRaw && !!process.env.TELEGRAM_BOT_TOKEN} info={leadsInfo} />
+      <Card kind="notify" title="Бот для уведомлений сотрудникам" hint="Уведомления по обучению и подключение Telegram в профиле сотрудника."
+        raw={notifyRaw} envFallback={!notifyRaw && !!process.env.TELEGRAM_BOT_TOKEN} info={notifyInfo} />
+    </div>
+  )
+}
+
 async function NotifyChats({ detect }: { detect: boolean }) {
+  const leadsToken = await getBotToken('leads')
+  const hasToken = !!leadsToken
+  const botInfo = hasToken ? await getBotInfo(leadsToken) : null
+  const botTag = botInfo ? `@${botInfo.username}` : 'бота заявок'
   const chats = await getNotifyChats()
   const envChat = (process.env.TELEGRAM_CHAT_ID || '').trim()
-  const hasToken = !!process.env.TELEGRAM_BOT_TOKEN
-  const detected = detect && hasToken ? await detectTelegramChats() : []
+  const detected = detect && hasToken ? await detectTelegramChats('leads') : []
   const known = new Set(chats.map(c => c.id))
   const newly = detected.filter(d => !known.has(d.id))
   const typeLabel = (t?: string) => t === 'private' ? 'Личный чат' : t === 'group' || t === 'supergroup' ? 'Группа' : t === 'channel' ? 'Канал' : 'Чат'
@@ -215,7 +277,7 @@ async function NotifyChats({ detect }: { detect: boolean }) {
   if (!hasToken) {
     return (
       <div className="admin-card" style={{ padding: '16px 22px', maxWidth: 620, fontSize: 13, color: '#b87613' }}>
-        Бот не подключён. Добавьте переменную <code>TELEGRAM_BOT_TOKEN</code> в настройках деплоя (Vercel) и сделайте редеплой — после этого здесь появится подключение чатов и групп.
+        Сначала задайте токен «Бота для заявок» выше — после этого появится подключение чатов и групп.
       </div>
     )
   }
@@ -223,7 +285,7 @@ async function NotifyChats({ detect }: { detect: boolean }) {
   return (
     <div style={{ maxWidth: 620 }}>
       <p style={{ fontSize: 13, color: '#8a929c', marginBottom: 14 }}>
-        Каждая новая заявка с сайта дублируется во все подключённые чаты и группы. Чтобы подключить группу — добавьте бота <b>@turanosassbot</b> в неё и напишите там <code>/start</code>, затем нажмите «Обнаружить».
+        Каждая новая заявка с сайта дублируется во все подключённые чаты и группы. Чтобы подключить группу — добавьте <b>{botTag}</b> в неё и напишите там <code>/start</code>, затем нажмите «Обнаружить».
       </p>
 
       {/* Подключённые чаты */}
@@ -266,7 +328,7 @@ async function NotifyChats({ detect }: { detect: boolean }) {
         <div style={{ marginTop: 16 }}>
           {newly.length === 0 ? (
             <div style={{ fontSize: 13, color: '#8a929c' }}>
-              Новых чатов не найдено. Откройте бота <b>@turanosassbot</b> и нажмите «Старт» (для личных уведомлений) или добавьте его в группу и напишите там <code>/start</code>, затем нажмите «Обнаружить» ещё раз.
+              Новых чатов не найдено. Откройте <b>{botTag}</b> и нажмите «Старт» (для личных уведомлений) или добавьте его в группу и напишите там <code>/start</code>, затем нажмите «Обнаружить» ещё раз.
             </div>
           ) : (
             <>
