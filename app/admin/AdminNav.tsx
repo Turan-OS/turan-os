@@ -21,6 +21,7 @@ const ICONS: Record<string, React.ReactNode> = {
   '/admin/contacts':     svg(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6" /><path d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" /></>),
   '/admin/training':     svg(<><path d="M12 4 3 8.5l9 4.5 9-4.5z" /><path d="M7 11v4.3c0 1.1 2.24 2 5 2s5-.9 5-2V11" /><path d="M21 8.5V14" /></>),
   '/admin/news':         svg(<><rect x="3.5" y="5" width="13" height="15" rx="1.5" /><path d="M16.5 9H20v9a2 2 0 0 1-2 2" /><path d="M6.5 9h7M6.5 12.5h7M6.5 16h4" /></>),
+  '/admin/content':      svg(<><rect x="4" y="4" width="16" height="16" rx="4" /><circle cx="12" cy="12" r="3.2" /><circle cx="16.8" cy="7.2" r="1" /></>),
   '/admin/links':        svg(<><path d="M9 15l6-6" /><path d="M10.5 6.5l1.2-1.2a4 4 0 0 1 5.7 5.7l-1.2 1.2" /><path d="M13.5 17.5l-1.2 1.2a4 4 0 0 1-5.7-5.7l1.2-1.2" /></>),
   '/admin/hr':           svg(<><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" /><path d="M16 4.5a3 3 0 0 1 0 6M18.5 19c0-2.2-1-4-2.7-4.6" /></>),
   '/admin/analytics':          svg(<><path d="M21 21H4a1 1 0 0 1-1-1V3" /><path d="M7 15l3.5-4 3 2.5L20 6" /></>),
@@ -47,6 +48,7 @@ const groups: { title?: string; items: Item[] }[] = [
   {
     title: 'Контент',
     items: [
+      { href: '/admin/content',   label: 'Контент-план', roles: CONTENT },
       { href: '/admin/news',      label: 'Новости',     roles: CONTENT },
       { href: '/admin/links',     label: 'Ссылки',      roles: CONTENT },
     ],
