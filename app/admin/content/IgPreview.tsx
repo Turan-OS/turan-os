@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { isVideo, type ContentType } from '@/lib/content'
 
 export default function IgPreview({
-  media, caption, type = 'carousel', account = 'turan_os', date,
+  media, caption, type = 'carousel', account = 'turanosbuh', date,
 }: {
   media: string[]; caption?: string; type?: ContentType; account?: string; date?: string | null
 }) {
