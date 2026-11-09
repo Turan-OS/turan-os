@@ -48,3 +48,7 @@ export function normalizeMedia(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === 'string' && !!x)
   return []
 }
+
+export function isVideo(url: string): boolean {
+  return /\.(mp4|mov|webm|m4v|ogv|ogg)(\?|#|$)/i.test(url)
+}

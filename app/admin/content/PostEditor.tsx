@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { createPost, updatePost } from './actions'
 import IgPreview from './IgPreview'
-import { TYPES, STATUSES, type ContentPost, type ContentType, type ContentStatus } from '@/lib/content'
+import { TYPES, STATUSES, isVideo, type ContentPost, type ContentType, type ContentStatus } from '@/lib/content'
 
 export default function PostEditor({ post }: { post?: ContentPost }) {
   const [title, setTitle] = useState(post?.title ?? '')
@@ -97,8 +97,10 @@ export default function PostEditor({ post }: { post?: ContentPost }) {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
             {media.map((url, k) => (
               <div key={url + k} style={{ position: 'relative', width: 84, height: 84, borderRadius: 8, overflow: 'hidden', border: '1px solid #e4e7ec' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {isVideo(url)
+                  ? <video src={url} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  : <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                 <span style={{ position: 'absolute', top: 2, left: 3, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '0 4px' }}>{k + 1}</span>
                 <button type="button" onClick={() => remove(k)} title="Удалить" style={miniBtn(2)}>×</button>
                 <button type="button" onClick={() => move(k, -1)} disabled={k === 0} title="Левее" style={miniBtn(22)}>‹</button>
@@ -110,7 +112,7 @@ export default function PostEditor({ post }: { post?: ContentPost }) {
               <span style={{ fontSize: 20 }}>＋</span>{uploading ? '…' : 'Добавить'}
             </button>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple onChange={onFiles} style={{ display: 'none' }} />
+          <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={onFiles} style={{ display: 'none' }} />
           {err && <div style={{ fontSize: 12, color: '#d24a3d' }}>{err}</div>}
         </div>
 

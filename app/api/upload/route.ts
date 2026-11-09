@@ -23,11 +23,14 @@ export async function POST(req: Request) {
     }
 
     const isHomework = folder === 'homework'
+    const isContent = folder === 'content'
     const okType = isHomework
       ? (file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type === 'application/pdf')
+      : isContent
+      ? (file.type.startsWith('image/') || file.type.startsWith('video/'))
       : file.type.startsWith('image/')
-    if (!okType) return NextResponse.json({ error: isHomework ? 'Допустимы аудио, изображения, PDF' : 'Только изображения' }, { status: 400 })
-    const limit = isHomework ? 25 : 8
+    if (!okType) return NextResponse.json({ error: isHomework ? 'Допустимы аудио, изображения, PDF' : isContent ? 'Допустимы изображения и видео' : 'Только изображения' }, { status: 400 })
+    const limit = isHomework ? 25 : isContent ? 200 : 8
     if (file.size > limit * 1024 * 1024) return NextResponse.json({ error: `Файл больше ${limit} МБ` }, { status: 400 })
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
     const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`

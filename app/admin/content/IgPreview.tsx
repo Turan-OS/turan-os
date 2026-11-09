@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { ContentType } from '@/lib/content'
+import { isVideo, type ContentType } from '@/lib/content'
 
 export default function IgPreview({
   media, caption, type = 'carousel', account = 'turan_os', date,
@@ -31,8 +31,10 @@ export default function IgPreview({
       {/* медиа */}
       <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {cur ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cur} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          isVideo(cur)
+            ? <video src={cur} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
+            // eslint-disable-next-line @next/next/no-img-element
+            : <img src={cur} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ color: '#b7bdc6', fontSize: 13, textAlign: 'center', padding: 20 }}>
             {type === 'text' ? 'Текстовый пост' : 'Нет изображений — загрузите слайды'}

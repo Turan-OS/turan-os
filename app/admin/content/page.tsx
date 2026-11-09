@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/currentUser'
-import { STATUSES, STATUS_META, TYPE_LABEL, normalizeMedia, type ContentPost } from '@/lib/content'
+import { STATUSES, STATUS_META, TYPE_LABEL, normalizeMedia, isVideo, type ContentPost } from '@/lib/content'
 import { setStatus } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -64,10 +64,15 @@ export default async function ContentPlanPage({ searchParams }: { searchParams: 
                 <Link href={`/admin/content/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', background: '#f2f4f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {cover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      isVideo(cover)
+                        ? <video src={cover} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
+                        // eslint-disable-next-line @next/next/no-img-element
+                        : <img src={cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <span style={{ color: '#b7bdc6', fontSize: 12 }}>{TYPE_LABEL[p.type]}</span>
+                    )}
+                    {cover && isVideo(cover) && (
+                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>▶</span>
                     )}
                     <span style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8 }}>
                       {TYPE_LABEL[p.type]}{p.media.length > 1 ? ` · ${p.media.length}` : ''}
